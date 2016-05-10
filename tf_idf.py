@@ -28,7 +28,7 @@ class TfIdf(object):
             self.df_dict[term] = self.calculate_df(term)
 
     def df(self, term):
-        return self.df_dict[term]
+        return self.df_dict.get(term) or self.n
 
     def calculate_matrix(self):
         self.matrix = []
