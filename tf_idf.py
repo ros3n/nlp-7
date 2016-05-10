@@ -64,7 +64,7 @@ class TfIdf(object):
                 heapq.heappush(results, (d, i))
             else:
                 heapq.heappushpop(results, (d, i))
-        return results
+        return list(reversed(sorted(results, key=lambda x: x[0])))
 
     def calculate_distance(self, v1, v2):
         keys = set(v1.keys()) & set(v2.keys())
@@ -83,6 +83,19 @@ class TfIdf(object):
     def query_weight(self, term, tf, max_tf):
         return (0.5 + 0.5 * tf / max_tf) * math.log(self.n / self.df(term))
 
+    def similar(self, doc_id):
+        sample = self.matrix[doc_id]
+        results = []
+        for i, doc in enumerate(self.matrix):
+            if i == doc_id:
+                continue
+            d = self.calculate_distance(sample, doc)
+            if len(results) <= 10:
+                heapq.heappush(results, (d, i))
+            else:
+                heapq.heappushpop(results, (d, i))
+        return list(reversed(sorted(results, key=lambda x: x[0])))
+
 
 # if __name__ == '__main__':
 # dictionary, library = load_library(
@@ -96,3 +109,5 @@ with open('df.data', 'rb') as f:
     tf_idf.df_dict = pickle.load(f)
 with open('matrix.data', 'rb') as f:
     tf_idf.matrix = pickle.load(f)
+reload(sys)
+sys.setdefaultencoding('utf-8')
