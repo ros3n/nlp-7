@@ -1,6 +1,7 @@
 # -*- encoding: utf-8 -*-
 
 from collections import defaultdict
+import heapq
 import math
 import pickle
 import dill
@@ -52,6 +53,35 @@ class TfIdf(object):
         data = list(reversed(sorted(data, key=lambda x: x[1])))
         for d in data[:n]:
             print u'({0}, {1})'.format(d[0], d[1]),
+
+    def query(self, query_string):
+        terms = query_string.lower().split()
+        query_weights = self.query_weights(terms)
+        results = []
+        for i, doc in enumerate(self.matrix):
+            d = self.calculate_distance(query_weights, doc)
+            if len(results) <= 10:
+                heapq.heappush(results, (d, i))
+            else:
+                heapq.heappushpop(results, (d, i))
+        return results
+
+    def calculate_distance(self, v1, v2):
+        keys = set(v1.keys()) & set(v2.keys())
+        v1_len = math.sqrt(sum([v**2 for v in v1.values()]))
+        v2_len = math.sqrt(sum([v**2 for v in v2.values()]))
+        if v1_len * v2_len == 0:
+            return 0.0
+        prod = sum([v1[k] * v2[k] for k in keys])
+        return prod / (v1_len * v2_len)
+
+    def query_weights(self, terms):
+        tfs = Counter(terms)
+        max_tf = tfs.most_common()[0][1]
+        return {t: self.query_weight(t, tfs[t], max_tf) for t in terms}
+
+    def query_weight(self, term, tf, max_tf):
+        return (0.5 + 0.5 * tf / max_tf) * math.log(self.n / self.df(term))
 
 
 # if __name__ == '__main__':
