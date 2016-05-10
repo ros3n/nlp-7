@@ -1,39 +1,39 @@
-from collections import Counter
-import os.path
-import pickle
+# -*- encoding: utf-8 -*-
+
+from collections import defaultdict
+import math
+from helpers import *
 
 
-def load_texts(path):
-    text = ''
-    with open(path) as f:
-        text = f.read()
-    return text.split('#')
+class TfIdf(object):
+    def __init__(self, library, dictionary):
+        self.library = library
+        self.dictionary = dictionary
+        self.n = len(library)
 
+    def tf(self, term, document):
+        return document[1][term]
 
-def load_base_forms(bforms_dir, name_template, count):
-    base_forms = []
-    for i in range(count - 1):
-        with open(os.path.join(bforms_dir, name_template.format(i)), 'rb') as f:
-            data = pickle.load(f)
-            base_forms.append(Counter(data))
-    return base_forms
+    def df(self, term):
+        return sum([1 for d in self.library if d[1][term] > 0])
 
+    def calculate_matrix(self):
+        self.matrix = []
+        for document in self.library:
+            row = defaultdict(lambda: 0.0)
+            for term in self.dictionary:
+                w = self.weight(term, document)
+                if w > 0:
+                    row[term] = w
+            self.matrix.append(row)
+        return self.matrix
 
-def get_dictionary(bforms):
-    words = []
-    for bf in bforms:
-        words.extend(bf.keys())
-    return sorted(tuple(set(words)))
-
-
-def load_library(texts_path, bforms_dir, name_template, count):
-    texts = load_texts(texts_path)
-    bforms = load_base_forms(bforms_dir, name_template, count)
-    dictionary = get_dictionary(bforms)
-    return dct, zip(texts, bforms)
+    def weight(self, term, document):
+        return self.tf(term, document) * math.log(self.n / self.df(term))
 
 
 if __name__ == '__main__':
     dictionary, library = load_library(
         sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
     )
+    tf_idf = TfIdf(library, dictionary)
